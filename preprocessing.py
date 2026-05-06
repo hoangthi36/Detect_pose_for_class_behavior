@@ -1,14 +1,9 @@
-# =========================
-# feature_extraction.py
-# =========================
 import numpy as np
 import pandas as pd
 import os
 import glob
 
-# =========================
-# CẤU HÌNH KEYPOINT
-# =========================
+
 # Thứ tự khớp trong CSV (theo file detect):
 # 0:nose  1:neck  2:left_shoulder  3:right_shoulder
 # 4:left_elbow  5:right_elbow  6:left_wrist  7:right_wrist
@@ -20,9 +15,9 @@ KEYPOINT_NAMES = [
     "left_wrist", "right_wrist"
 ]
 
-# =========================
+
 # ĐỌC JOINTS TỪ 1 HÀNG CSV
-# =========================
+
 def row_to_joints(row):
     """
     Đọc tọa độ pixel từ 1 hàng DataFrame
@@ -35,25 +30,14 @@ def row_to_joints(row):
         joints.append((x, y))
     return joints
 
-# =========================
+
 # COMPONENT 1: NORMALIZED JOINT LOCATION
-# Công thức (1): x' = x/W, y' = y/H
-# 8 khớp × 2 = 16 features
-# =========================
 def normalized_joints(joints, img_w, img_h):
     norm = [(x / img_w, y / img_h) for (x, y) in joints]
     return np.array(norm).flatten()   # shape (16,)
 
-# =========================
+
 # COMPONENT 2: JOINT DISTANCES
-# Công thức (2): dist(A,B) = sqrt((xB-xA)² + (yB-yA)²)
-# 5 khoảng cách d1→d5 (theo paper, bỏ neck↔shoulder):
-#   d1 = nose(0)        ↔ neck(1)
-#   d2 = neck(1)        ↔ left_shoulder(2)
-#   d3 = left_shoulder(2) ↔ left_elbow(4)    [index 4]
-#   d4 = neck(1)        ↔ right_shoulder(3)
-#   d5 = right_shoulder(3) ↔ right_elbow(5)  [index 5]
-# =========================
 def euclidean(a, b):
     return float(np.linalg.norm(np.array(a) - np.array(b)))
 
@@ -66,27 +50,7 @@ def joint_distances(joints):
     d5 = euclidean(j[3], j[5])   # right_shoulder → right_elbow
     return np.array([d1, d2, d3, d4, d5])   # shape (5,)
 
-# =========================
 # COMPONENT 3: BONE ANGLES
-# Góc giữa vector xương và trục tham chiếu (v0, v90, v180)
-#
-# φ1: vector neck→nose (v10)        với v90  (trục dọc 90°)
-# φ2: vector right_shoulder→neck (v_right_sh→neck = v32 theo paper)
-#        với v180 (trục ngang 180°)
-# φ3: vector right_elbow→right_wrist (v43 theo paper)
-#        với v90
-# φ4: vector left_shoulder→left_elbow (v65 theo paper)
-#        với v0  (trục ngang 0°)
-# φ5: vector left_elbow→left_wrist (v76 theo paper)
-#        với v90
-#
-# NOTE: index trong paper dùng số thứ tự của chính paper (0-7),
-#       map sang index mảng joints của chúng ta:
-#   paper-0 = nose(0), paper-1 = neck(1),
-#   paper-2 = left_shoulder(2), paper-3 = left_elbow(4),
-#   paper-4 = left_wrist(6), paper-5 = right_shoulder(3),
-#   paper-6 = right_elbow(5), paper-7 = right_wrist(7)
-# =========================
 def angle_with_ref(vec, ref_deg):
     """
     Tính góc (độ) giữa vector 2D và trục tham chiếu.
@@ -128,10 +92,9 @@ def bone_angles(joints):
 
     return np.array([phi1, phi2, phi3, phi4, phi5])   # shape (5,)
 
-# =========================
+
 # TỔNG HỢP FEATURE VECTOR
-# 16 + 5 + 5 = 26 features
-# =========================
+
 def extract_feature_vector(joints, img_w=1280, img_h=720):
     """
     joints : list 8 điểm pixel [(x,y), ...]
@@ -143,9 +106,7 @@ def extract_feature_vector(joints, img_w=1280, img_h=720):
     angles = bone_angles(joints)                        # (5,)
     return np.concatenate([loc, dist, angles])          # (26,)
 
-# =========================
 # XỬ LÝ 1 FILE CSV
-# =========================
 def process_csv(csv_path, img_w=1280, img_h=720):
     df = pd.read_csv(csv_path)
     rows = []
@@ -202,4 +163,4 @@ if __name__ == "__main__":
 
     print(f"\nHoàn tất! Đã lưu {len(result)} dòng vào '{OUTPUT_FILE}'")
     print(f"Shape: {result.shape}")
-    print(result.head())
+    print(result.head())        

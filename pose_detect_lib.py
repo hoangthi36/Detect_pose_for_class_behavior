@@ -7,14 +7,9 @@ from mediapipe.tasks.python import vision
 import pandas as pd
 import os
 
-# =========================
-# INIT YOLOv8
-# =========================
 yolo = YOLO("yolov8n.pt")
 
-# =========================
-# INIT MEDIAPIPE TASK API
-# =========================
+
 base_options = python.BaseOptions(
     model_asset_path="pose_landmarker_lite.task"
 )
@@ -30,9 +25,7 @@ landmarker = vision.PoseLandmarker.create_from_options(options)
 label = "Boring"
 no_of_frames = 400
 
-# =========================
-# CONVERT LANDMARKS
-# =========================
+
 def convert_landmarks(pose_landmarks, w, h):
     def get_point(idx):
         lm = pose_landmarks[idx]
@@ -75,9 +68,6 @@ EDGES = [
     (1, 3), (3, 5), (5, 7),
 ]
 
-# =========================
-# SUPPORT FUNCTION
-# =========================
 def count_points_in_box(box, skeleton):
     x1, y1, x2, y2 = box
     count = 0
@@ -86,9 +76,7 @@ def count_points_in_box(box, skeleton):
             count += 1
     return count
 
-# =========================
-# DETECT
-# =========================
+
 def detect(frame):
     h, w, _ = frame.shape
 
@@ -124,9 +112,6 @@ def detect(frame):
 
     return boxes, skeletons, matched_boxes
 
-# =========================
-# DRAW
-# =========================
 def draw(frame, skeletons, boxes=None):
     for sk in skeletons:
         for (x, y) in sk:
@@ -145,9 +130,7 @@ def draw(frame, skeletons, boxes=None):
 
     return frame
 
-# =========================
-# BUILD ROW
-# =========================
+
 def build_row(frame_idx, skeleton, label):
     row = {"frame_id": frame_idx}
 
@@ -159,9 +142,7 @@ def build_row(frame_idx, skeleton, label):
     row["label"] = label
     return row
 
-# =========================
-# MAIN LOOP
-# =========================
+#main
 frame_data = []
 output_file = f"data_{label}.csv"
 frame_idx = 0
@@ -205,9 +186,7 @@ while collected < no_of_frames:
 cap.release()
 cv2.destroyAllWindows()
 
-# =========================
-# GHI FILE CSV
-# =========================
+#ghi csv
 if frame_data:
     df = pd.DataFrame(frame_data)
 
